@@ -54,6 +54,24 @@ pad := 12 - escseq.VisibleLen(label)
 fmt.Println(label + strings.Repeat(" ", pad) + "OK")
 ```
 
+Stripping escape codes from a stream as it's written, rather than after
+the fact on a complete string, e.g. when a subprocess's colored stdout
+is being piped into a log file:
+
+```go
+logFile, _ := os.Create("build.log")
+w := escseq.NewWriter(logFile)
+
+cmd := exec.Command("some-colorful-tool")
+cmd.Stdout = w
+cmd.Run()
+```
+
+`Writer` copes with a sequence being split across separate writes (a
+line flushed a chunk at a time will do this), so it's safe to use as
+the direct destination of a subprocess or any other writer that
+doesn't write a whole line at once.
+
 ## what Strip does and doesn't handle
 
 `Strip` recognizes CSI sequences (`ESC [ ... final-byte`, used for
